@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(youbot_driver_ros_interface)
 
+# enable python teleop script
+catkin_python_setup()
 
 find_package(catkin REQUIRED COMPONENTS youbot_driver roscpp rosconsole actionlib tf control_msgs brics_actuator pr2_msgs diagnostic_msgs geometry_msgs nav_msgs pr2_msgs std_msgs std_srvs trajectory_msgs
 message_generation)
@@ -54,7 +56,7 @@ OPTION(USE_SETCAP "Set permissions to access ethernet interface without sudo" OF
 SET(SUDO_COMMAND sudo)
 IF(NOT $ENV{USE_NORMAL_SUDO})
     SET(SUDO_COMMAND gksudo)
-ENDIF($ENV{USE_NORMAL_SUDO})
+ENDIF(NOT $ENV{USE_NORMAL_SUDO})
 
 IF(USE_SETCAP)
 add_custom_command(TARGET youbot_driver_ros_interface POST_BUILD
@@ -77,9 +79,6 @@ target_link_libraries(youbot_2nd_arm_test ${catkin_LIBRARIES} ${Boost_LIBRARIES}
 install(TARGETS youbot_driver_ros_interface youbot_arm_test
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-
-# enable python teleop script
-catkin_python_setup()
 
 install(PROGRAMS src/examples/youbot_keyboard_teleop.py
          DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
