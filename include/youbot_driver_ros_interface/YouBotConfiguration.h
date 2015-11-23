@@ -79,7 +79,7 @@ public:
 
 
     /// Receives Twist messages for the base.
-    ros::Subscriber baseCommandSubscriber;
+    ros::Subscriber baseVelCommandSubscriber;
 
 
     /// Publishes Odometry messages
@@ -93,6 +93,15 @@ public:
 
     /// Service to switch the motor ON by setting the velocity to zero
     ros::ServiceServer switchONMotorsService;
+
+    /// Service to move the base to the desired position
+    ros::ServiceServer setPositionService;
+
+    /// Service to displace the base
+    ros::ServiceServer displaceService;
+
+    /// Service to rotate the base
+    ros::ServiceServer rotateService;
 
     /// Publishes tf frames as odometry
     tf::TransformBroadcaster odometryBroadcaster;

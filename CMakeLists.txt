@@ -2,8 +2,18 @@ cmake_minimum_required(VERSION 2.8.3)
 project(youbot_driver_ros_interface)
 
 
-find_package(catkin REQUIRED COMPONENTS youbot_driver roscpp rosconsole actionlib tf control_msgs brics_actuator pr2_msgs diagnostic_msgs geometry_msgs nav_msgs pr2_msgs std_msgs std_srvs trajectory_msgs)
+find_package(catkin REQUIRED COMPONENTS youbot_driver roscpp rosconsole actionlib tf control_msgs brics_actuator pr2_msgs diagnostic_msgs geometry_msgs nav_msgs pr2_msgs std_msgs std_srvs trajectory_msgs
+message_generation)
 find_package(Boost REQUIRED COMPONENTS thread date_time filesystem system)
+
+add_service_files(
+  FILES
+  BaseSetPosition.srv
+  BaseDisplace.srv
+  BaseRotate.srv
+)
+
+generate_messages()
 
 catkin_package(
 	CATKIN_DEPENDS youbot_driver rosconsole roscpp pr2_msgs brics_actuator tf control_msgs diagnostic_msgs geometry_msgs nav_msgs pr2_msgs std_msgs std_srvs trajectory_msgs
@@ -41,9 +51,9 @@ install(DIRECTORY launch/
 
 OPTION(USE_SETCAP "Set permissions to access ethernet interface without sudo" OFF)
 
-SET(SUDO_COMMAND gksudo)
-IF($ENV{USE_NORMAL_SUDO})
-    SET(SUDO_COMMAND sudo)
+SET(SUDO_COMMAND sudo)
+IF(NOT $ENV{USE_NORMAL_SUDO})
+    SET(SUDO_COMMAND gksudo)
 ENDIF($ENV{USE_NORMAL_SUDO})
 
 IF(USE_SETCAP)

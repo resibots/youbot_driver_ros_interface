@@ -98,13 +98,16 @@ void YouBotOODLWrapper::initializeBase(std::string baseName)
     }
 
     /* setup input/output communication */
-    youBotConfiguration.baseConfiguration.baseCommandSubscriber = node.subscribe("cmd_vel", 1000, &YouBotOODLWrapper::baseCommandCallback, this);
+    youBotConfiguration.baseConfiguration.baseVelCommandSubscriber = node.subscribe("cmd_vel", 1000, &YouBotOODLWrapper::baseVelCommandCallback, this);
     youBotConfiguration.baseConfiguration.baseOdometryPublisher = node.advertise<nav_msgs::Odometry > ("odom", 1);
     youBotConfiguration.baseConfiguration.baseJointStatePublisher = node.advertise<sensor_msgs::JointState > ("base/joint_states", 1);
 
     /* setup services*/
     youBotConfiguration.baseConfiguration.switchOffMotorsService = node.advertiseService("base/switchOffMotors", &YouBotOODLWrapper::switchOffBaseMotorsCallback, this);
     youBotConfiguration.baseConfiguration.switchONMotorsService = node.advertiseService("base/switchOnMotors", &YouBotOODLWrapper::switchOnBaseMotorsCallback, this);
+    youBotConfiguration.baseConfiguration.setPositionService = node.advertiseService("base/setPosition", &YouBotOODLWrapper::baseSetPositionCallback, this);
+    youBotConfiguration.baseConfiguration.displaceService = node.advertiseService("base/displace", &YouBotOODLWrapper::baseDisplaceCallback, this);
+    youBotConfiguration.baseConfiguration.rotateService = node.advertiseService("base/rotate", &YouBotOODLWrapper::baseRotateCallback, this);
 
     /* setup frame_ids */
     youBotOdometryFrameID = "odom";
@@ -285,11 +288,14 @@ void YouBotOODLWrapper::stop()
         youBotConfiguration.baseConfiguration.youBotBase = 0;
     }
 
-    youBotConfiguration.baseConfiguration.baseCommandSubscriber.shutdown();
+    youBotConfiguration.baseConfiguration.baseVelCommandSubscriber.shutdown();
     youBotConfiguration.baseConfiguration.baseJointStatePublisher.shutdown();
     youBotConfiguration.baseConfiguration.baseOdometryPublisher.shutdown();
     youBotConfiguration.baseConfiguration.switchONMotorsService.shutdown();
     youBotConfiguration.baseConfiguration.switchOffMotorsService.shutdown();
+    youBotConfiguration.baseConfiguration.setPositionService.shutdown();
+    youBotConfiguration.baseConfiguration.displaceService.shutdown();
+    youBotConfiguration.baseConfiguration.rotateService.shutdown();
     // youBotConfiguration.baseConfiguration.odometryBroadcaster.
     youBotConfiguration.hasBase = false;
     areBaseMotorsSwitchedOn = false;
@@ -320,7 +326,7 @@ void YouBotOODLWrapper::stop()
     youbot::EthercatMaster::destroy();
 }
 
-void YouBotOODLWrapper::baseCommandCallback(const geometry_msgs::Twist& youbotBaseCommand)
+void YouBotOODLWrapper::baseVelCommandCallback(const geometry_msgs::Twist& youbotBaseVelCommand)
 {
 
     if (youBotConfiguration.hasBase)
@@ -347,9 +353,9 @@ void YouBotOODLWrapper::baseCommandCallback(const geometry_msgs::Twist& youbotBa
          *
          */
 
-        longitudinalVelocity = youbotBaseCommand.linear.x * meter_per_second;
-        transversalVelocity = youbotBaseCommand.linear.y * meter_per_second;
-        angularVelocity = youbotBaseCommand.angular.z * radian_per_second;
+        longitudinalVelocity = youbotBaseVelCommand.linear.x * meter_per_second;
+        transversalVelocity = youbotBaseVelCommand.linear.y * meter_per_second;
+        angularVelocity = youbotBaseVelCommand.angular.z * radian_per_second;
 
         try
         {
@@ -982,6 +988,86 @@ bool YouBotOODLWrapper::switchOnBaseMotorsCallback(std_srvs::Empty::Request& req
         return false;
     }
     areBaseMotorsSwitchedOn = true;
+    return true;
+}
+
+bool YouBotOODLWrapper::baseSetPositionCallback(youbot_driver_ros_interface::BaseSetPosition::Request& request, youbot_driver_ros_interface::BaseSetPosition::Response& response) {
+    quantity<si::length> longitudinalPosition = request.longitudinal * meter;
+    quantity<si::length> transversalPosition = request.transversal * meter;
+    quantity<si::plane_angle> orientation = request.orientation * radian;
+    ROS_INFO_STREAM("Set base position: " << longitudinalPosition << " "<< transversalPosition);
+
+    if (youBotConfiguration.hasBase)
+    { // in case stop has been invoked
+        try
+        {
+            youBotConfiguration.baseConfiguration.youBotBase->setBasePosition(longitudinalPosition, transversalPosition, orientation);
+        }
+        catch (std::exception& e)
+        {
+            std::string errorMessage = e.what();
+            ROS_WARN("Cannot set base position: %s", errorMessage.c_str());
+            return false;
+        }
+
+    }
+    else
+    {
+        ROS_ERROR("No base initialized!");
+        return false;
+    } 
+    return true;
+}
+
+bool YouBotOODLWrapper::baseDisplaceCallback(youbot_driver_ros_interface::BaseDisplace::Request& request, youbot_driver_ros_interface::BaseDisplace::Response& response) {
+    quantity<si::length> longitudinalDisplacement = request.longitudinal * meter;
+    quantity<si::length> transversalDisplacement= request.transversal * meter;
+    ROS_INFO_STREAM("Base displacement: " << longitudinalDisplacement << " "<< transversalDisplacement);
+
+    if (youBotConfiguration.hasBase)
+    { // in case stop has been invoked
+        try
+        {
+            youBotConfiguration.baseConfiguration.youBotBase->setBaseDisplacement(longitudinalDisplacement, transversalDisplacement);
+        }
+        catch (std::exception& e)
+        {
+            std::string errorMessage = e.what();
+            ROS_WARN("Cannot displace base: %s", errorMessage.c_str());
+            return false;
+        }
+
+    }
+    else
+    {
+        ROS_ERROR("No base initialized!");
+        return false;
+    }
+    return true;
+}
+
+bool YouBotOODLWrapper::baseRotateCallback(youbot_driver_ros_interface::BaseRotate::Request& request, youbot_driver_ros_interface::BaseRotate::Response& response) {
+    quantity<si::plane_angle> orientation = request.angle * radian;
+    ROS_INFO_STREAM("Base rotation: " << orientation);
+    if (youBotConfiguration.hasBase)
+    { // in case stop has been invoked
+        try
+        {
+            youBotConfiguration.baseConfiguration.youBotBase->setBaseRotation(orientation);
+        }
+        catch (std::exception& e)
+        {
+            std::string errorMessage = e.what();
+            ROS_WARN("Cannot rotate base: %s", errorMessage.c_str());
+            return false;
+        }
+
+    }
+    else
+    {
+        ROS_ERROR("No base initialized!");
+        return false;
+    } 
     return true;
 }
 

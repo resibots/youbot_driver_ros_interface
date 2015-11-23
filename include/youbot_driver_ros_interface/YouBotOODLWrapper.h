@@ -49,9 +49,12 @@
 
 /* ROS includes */
 #include "geometry_msgs/Twist.h"
-#include "tf/transform_broadcaster.h"
+ #include "tf/transform_broadcaster.h"
 #include "nav_msgs/Odometry.h"
 #include "std_srvs/Empty.h"
+#include "youbot_driver_ros_interface/BaseSetPosition.h"
+#include "youbot_driver_ros_interface/BaseDisplace.h"
+ #include "youbot_driver_ros_interface/BaseRotate.h"
 #include "diagnostic_msgs/DiagnosticStatus.h"
 #include <diagnostic_msgs/DiagnosticArray.h>
 
@@ -120,10 +123,10 @@ public:
     /* Communication: */
 
     /**
-     * @brief Callback that is executed when a commend for the base comes in.
-     * @param youbotBaseCommand Message that contains the desired translational and rotational velocity for the base.
+     * @brief Callback that is executed when a cmd_vel for the base comes in.
+     * @param youbotBaseVelCommand Message that contains the desired translational and rotational velocity for the base.
      */
-    void baseCommandCallback(const geometry_msgs::Twist& youbotBaseCommand);
+    void baseVelCommandCallback(const geometry_msgs::Twist& youbotBaseVelCommand);
 
     /**
      * @deprecated
@@ -193,6 +196,24 @@ public:
     bool switchOffBaseMotorsCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 
     bool switchOnBaseMotorsCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+
+    /**
+     * @brief Callback that is executed when a setPosition service request for the base comes in.
+     * @param request Message that contains the target position for the base. longitudinal is the forward or backward target position, transversal is the sideway target position, orientation is the rotation around the center of the YouBot
+     */
+    bool baseSetPositionCallback(youbot_driver_ros_interface::BaseSetPosition::Request& request, youbot_driver_ros_interface::BaseSetPosition::Response& response);
+
+    /**
+     * @brief Callback that is executed when a displace service request for the base comes in.
+     * @param request Message that contains the displacementfor the base. longitudinal is the forward or backward displacement, transversal is the sideway displacement
+     */
+    bool baseDisplaceCallback(youbot_driver_ros_interface::BaseDisplace::Request& request, youbot_driver_ros_interface::BaseDisplace::Response& response);
+
+    /**
+     * @brief Callback that is executed when a rotate service request for the base comes in.
+     * @param request Message that contains the rotation for the base. angle is the rotation around the center of the YouBot
+     */
+    bool baseRotateCallback(youbot_driver_ros_interface::BaseRotate::Request& request, youbot_driver_ros_interface::BaseRotate::Response& response);
 
     bool switchOffArmMotorsCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response, int armIndex);
 
