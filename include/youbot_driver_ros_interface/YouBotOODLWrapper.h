@@ -106,6 +106,10 @@ public:
      */
     void initializeBase(std::string baseName);
 
+    void setBaseVelocity(double youBotBaseJointVelocity);
+
+    void setBaseAcceleration(double youBotBaseJointAcceleration);
+
     /**
      * @brief Initializes a youBot base.
      * @param armName Name of the base. Used to open the configuration file e.g. youbot-manipulator.cfg

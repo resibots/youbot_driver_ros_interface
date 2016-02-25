@@ -55,11 +55,15 @@ int main(int argc, char **argv)
 	bool youBotHasBase;
 	bool youBotHasArms;
 	double youBotDriverCycleFrequencyInHz;	//the driver recives commands and publishes them with a fixed frequency
+             double  youBotBaseJointVelocity;
+             double  youBotBaseJointAcceleration;
 	n.param("youBotHasBase", youBotHasBase, true);
 	n.param("youBotHasArms", youBotHasArms, true);
 	n.param("youBotDriverCycleFrequencyInHz", youBotDriverCycleFrequencyInHz, 50.0);
 	n.param<std::string>("youBotConfigurationFilePath", youBot.youBotConfiguration.configurationFilePath, mkstr(YOUBOT_CONFIGURATIONS_DIR));
 	n.param<std::string>("youBotBaseName", youBot.youBotConfiguration.baseConfiguration.baseID, "youbot-base");
+             n.param("youBotBaseJointVelocity", youBotBaseJointVelocity, 8.0);
+             n.param("youBotBaseJointAcceleration", youBotBaseJointAcceleration, 4.0);
 
 
 	// Retrieve all defined arm names from the launch file params
@@ -89,6 +93,8 @@ int main(int argc, char **argv)
     if (youBotHasBase == true)
     {
         youBot.initializeBase(youBot.youBotConfiguration.baseConfiguration.baseID);
+        youBot.setBaseVelocity(youBotBaseJointVelocity);
+        youBot.setBaseAcceleration(youBotBaseJointAcceleration);
     }
 
 	if (youBotHasArms == true) {

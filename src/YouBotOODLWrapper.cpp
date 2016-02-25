@@ -118,6 +118,26 @@ void YouBotOODLWrapper::initializeBase(std::string baseName)
     areBaseMotorsSwitchedOn = true;
 }
 
+void YouBotOODLWrapper::setBaseVelocity(double youBotBaseJointVelocity)
+{
+    for (int i = 1; i <= 4; i++) {
+        youbot::MaximumPositioningVelocity maxPositioningVelocity;                
+        youBotConfiguration.baseConfiguration.youBotBase->getBaseJoint(i).getConfigurationParameter(maxPositioningVelocity);                
+        maxPositioningVelocity.setParameter(youBotBaseJointVelocity * radian_per_second);
+        youBotConfiguration.baseConfiguration.youBotBase->getBaseJoint(i).setConfigurationParameter(maxPositioningVelocity);
+    }
+}
+
+void YouBotOODLWrapper::setBaseAcceleration(double youBotBaseJointAcceleration)
+{
+    for (int i = 1; i <= 4; i++) {
+        youbot::MotorAcceleration motorAcceleration;
+        youBotConfiguration.baseConfiguration.youBotBase->getBaseJoint(i).getConfigurationParameter(motorAcceleration);
+        motorAcceleration.setParameter(youBotBaseJointAcceleration * radians_per_second / boost::units::si::seconds);
+        youBotConfiguration.baseConfiguration.youBotBase->getBaseJoint(i).setConfigurationParameter(motorAcceleration);
+    }
+}
+
 void YouBotOODLWrapper::initializeArm(std::string armName, bool enableStandardGripper)
 {
     int armIndex;
@@ -995,7 +1015,6 @@ bool YouBotOODLWrapper::baseSetPositionCallback(youbot_driver_ros_interface::Bas
     quantity<si::length> longitudinalPosition = request.longitudinal * meter;
     quantity<si::length> transversalPosition = request.transversal * meter;
     quantity<si::plane_angle> orientation = request.orientation * radian;
-    ROS_INFO_STREAM("Set base position: " << longitudinalPosition << " "<< transversalPosition);
 
     if (youBotConfiguration.hasBase)
     { // in case stop has been invoked
@@ -1022,13 +1041,28 @@ bool YouBotOODLWrapper::baseSetPositionCallback(youbot_driver_ros_interface::Bas
 bool YouBotOODLWrapper::baseDisplaceCallback(youbot_driver_ros_interface::BaseDisplace::Request& request, youbot_driver_ros_interface::BaseDisplace::Response& response) {
     quantity<si::length> longitudinalDisplacement = request.longitudinal * meter;
     quantity<si::length> transversalDisplacement= request.transversal * meter;
-    ROS_INFO_STREAM("Base displacement: " << longitudinalDisplacement << " "<< transversalDisplacement);
 
     if (youBotConfiguration.hasBase)
     { // in case stop has been invoked
         try
         {
             youBotConfiguration.baseConfiguration.youBotBase->setBaseDisplacement(longitudinalDisplacement, transversalDisplacement);
+
+            std::vector<youbot::JointSensedAngle> last;
+            youBotConfiguration.baseConfiguration.youBotBase->getJointData(last);
+            bool finished = false;
+
+            while(!finished)
+            {
+                ros::Duration(0.1).sleep();
+                std::vector<youbot::JointSensedAngle> data;
+                youBotConfiguration.baseConfiguration.youBotBase->getJointData(data);
+                double diff = 0;
+                for (size_t i = 0; i < 4; i++)
+                    diff += std::abs(last[i].angle.value() - data[i].angle.value());
+                last = data;
+                finished = diff < 1e-3;
+            }
         }
         catch (std::exception& e)
         {
@@ -1048,12 +1082,27 @@ bool YouBotOODLWrapper::baseDisplaceCallback(youbot_driver_ros_interface::BaseDi
 
 bool YouBotOODLWrapper::baseRotateCallback(youbot_driver_ros_interface::BaseRotate::Request& request, youbot_driver_ros_interface::BaseRotate::Response& response) {
     quantity<si::plane_angle> orientation = request.angle * radian;
-    ROS_INFO_STREAM("Base rotation: " << orientation);
+
     if (youBotConfiguration.hasBase)
     { // in case stop has been invoked
         try
         {
             youBotConfiguration.baseConfiguration.youBotBase->setBaseRotation(orientation);
+            std::vector<youbot::JointSensedAngle> last;
+            youBotConfiguration.baseConfiguration.youBotBase->getJointData(last);
+            bool finished = false;
+
+            while(!finished)
+            {
+                ros::Duration(0.1).sleep();
+                std::vector<youbot::JointSensedAngle> data;
+                youBotConfiguration.baseConfiguration.youBotBase->getJointData(data);
+                double diff = 0;
+                for (size_t i = 0; i < 4; i++)
+                    diff += std::abs(last[i].angle.value() - data[i].angle.value());
+                last = data;
+                finished = diff < 1e-3;
+            }
         }
         catch (std::exception& e)
         {
