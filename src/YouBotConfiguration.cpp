@@ -39,15 +39,14 @@
 
 #include "youbot_driver_ros_interface/YouBotConfiguration.h"
 
-namespace youBot
-{
+namespace youBot {
 
-YouBotBaseConfiguration::YouBotBaseConfiguration()
-{
-    youBotBase = 0;
+    YouBotBaseConfiguration::YouBotBaseConfiguration()
+    {
+        youBotBase = 0;
 
-    /* provide some default values for the joint names (might be overwritten) */
-    /*
+        /* provide some default values for the joint names (might be overwritten) */
+        /*
      *  numbering of youBot wheels:
      *
      *    FRONT
@@ -61,59 +60,26 @@ YouBotBaseConfiguration::YouBotBaseConfiguration()
      *
      *    BACK
      */
-    wheelNames.clear();
-    wheelNames.push_back("wheel_joint_fl"); //wheel #1
-    wheelNames.push_back("wheel_joint_fr"); //wheel #2
-    wheelNames.push_back("wheel_joint_bl"); //wheel #3
-    wheelNames.push_back("wheel_joint_br"); //wheel #4
-}
+        wheelNames.clear();
+        wheelNames.push_back("wheel_joint_fl"); //wheel #1
+        wheelNames.push_back("wheel_joint_fr"); //wheel #2
+        wheelNames.push_back("wheel_joint_bl"); //wheel #3
+        wheelNames.push_back("wheel_joint_br"); //wheel #4
+    }
 
-YouBotBaseConfiguration::~YouBotBaseConfiguration()
-{
-    // No delete of youBot base pointer - this class has no ownership 
-}
+    YouBotBaseConfiguration::~YouBotBaseConfiguration()
+    {
+        // No delete of youBot base pointer - this class has no ownership
+    }
 
-YouBotArmConfiguration::YouBotArmConfiguration()
-{
-    youBotArm = 0;
-    armJointTrajectoryAction = 0;
+    YouBotConfiguration::YouBotConfiguration()
+    {
+        hasBase = false;
+    }
 
-    /* provide some default values for the joint names (might be overwritten) */
-    jointNames.clear();
-    jointNames.push_back("arm_joint_1");
-    jointNames.push_back("arm_joint_2");
-    jointNames.push_back("arm_joint_3");
-    jointNames.push_back("arm_joint_4");
-    jointNames.push_back("arm_joint_5");
-
-    gripperFingerNames.clear();
-    gripperFingerNames.push_back("gripper_finger_joint_l");
-    gripperFingerNames.push_back("gripper_finger_joint_r");
-}
-
-YouBotArmConfiguration::~YouBotArmConfiguration()
-{
-    // No delete of youBot arm pointer - this class has no ownership 
-    if (armJointTrajectoryAction) {
-		delete armJointTrajectoryAction;
-		armJointTrajectoryAction = 0;
-	}
-    jointNames.clear();
-}
-
-YouBotConfiguration::YouBotConfiguration()
-{
-    youBotArmConfigurations.clear();
-    armNameToArmIndexMapping.clear();
-    hasBase = false;
-    hasArms = false;
-}
-
-YouBotConfiguration::~YouBotConfiguration()
-{
-    youBotArmConfigurations.clear();
-    armNameToArmIndexMapping.clear();
-}
+    YouBotConfiguration::~YouBotConfiguration()
+    {
+    }
 
 } // namespace youBot
 

@@ -46,172 +46,76 @@
 
 /* OODL includes */
 #include <youbot_driver/youbot/YouBotBase.hpp>
-#include <youbot_driver/youbot/YouBotManipulator.hpp>
-#include <actionlib/server/simple_action_server.h>
-#include <control_msgs/FollowJointTrajectoryAction.h>
 
-typedef actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction> Server;
+namespace youBot {
 
-class JointTrajectoryAction;
+    class YouBotBaseConfiguration {
+    public:
+        /// Standard constructor
+        YouBotBaseConfiguration();
 
-namespace youBot
-{
+        /// Standard destructor
+        virtual ~YouBotBaseConfiguration();
 
-class YouBotBaseConfiguration
-{
-public:
+        /// Handle to the base
+        youbot::YouBotBase* youBotBase;
 
-    /// Standard constructor
-    YouBotBaseConfiguration();
+        /// "Name" of the base. Typically derived from name of youBot configuration file.
+        std::string baseID;
 
-    /// Standard destructor
-    virtual ~YouBotBaseConfiguration();
+        /// Joint names for the wheels
+        std::vector<std::string> wheelNames;
 
-    /// Handle to the base
-    youbot::YouBotBase* youBotBase;
+        /// Receives Twist messages for the base.
+        ros::Subscriber baseVelCommandSubscriber;
 
+        /// Publishes Odometry messages
+        ros::Publisher baseOdometryPublisher;
 
-    /// "Name" of the base. Typically derived from name of youBot configuration file.
-    std::string baseID;
+        /// Publishes JointState messages with angles/velocities for the wheels.
+        ros::Publisher baseJointStatePublisher;
 
-    /// Joint names for the wheels
-    std::vector<std::string> wheelNames;
+        /// Service to switch the motor off by setting the PWM value to zero
+        ros::ServiceServer switchOffMotorsService;
 
+        /// Service to switch the motor ON by setting the velocity to zero
+        ros::ServiceServer switchONMotorsService;
 
-    /// Receives Twist messages for the base.
-    ros::Subscriber baseVelCommandSubscriber;
+        /// Service to move the base to the desired position
+        ros::ServiceServer setPositionService;
 
+        /// Service to displace the base
+        ros::ServiceServer displaceService;
 
-    /// Publishes Odometry messages
-    ros::Publisher baseOdometryPublisher;
+        /// Service to rotate the base
+        ros::ServiceServer rotateService;
 
-    /// Publishes JointState messages with angles/velocities for the wheels.
-    ros::Publisher baseJointStatePublisher;
-
-    /// Service to switch the motor off by setting the PWM value to zero
-    ros::ServiceServer switchOffMotorsService;
-
-    /// Service to switch the motor ON by setting the velocity to zero
-    ros::ServiceServer switchONMotorsService;
-
-    /// Service to move the base to the desired position
-    ros::ServiceServer setPositionService;
-
-    /// Service to displace the base
-    ros::ServiceServer displaceService;
-
-    /// Service to rotate the base
-    ros::ServiceServer rotateService;
-
-    /// Publishes tf frames as odometry
-    tf::TransformBroadcaster odometryBroadcaster;
-
-
-};
-
-class YouBotArmConfiguration
-{
-public:
-
-    /// Standard constructor
-    YouBotArmConfiguration();
-
-    /// Standard destructor
-    virtual ~YouBotArmConfiguration();
-
-    /// Handle to the arm
-    youbot::YouBotManipulator* youBotArm;
-
-
-    /// "Name" of the arm. Typically derived from name of youBot configuration file.
-    std::string armID;
-
-    /// Name prefix for topic e.g arm_1/...
-    std::string commandTopicName;
-
-    /// Parent frameID for the published messages
-    std::string parentFrameIDName;
-
-    /// Names of the joints. Are typically derived from the configuration files
-    std::vector<std::string> jointNames;
-
-    ///Joint names for the gripper fingers
-    std::vector<std::string> gripperFingerNames;
-
-    const static unsigned int LEFT_FINGER_INDEX = 0;
-    const static unsigned int RIGHT_FINGER_INDEX = 1;
-
-    /// Receives "brics_actuator/JointPositions" for the arm joints
-    ros::Subscriber armPositionCommandSubscriber;
-
-    /// Receives "brics_actuator/JointVelocities" for the arm joints
-    ros::Subscriber armVelocityCommandSubscriber;
-
-	/// Implements a "control_msgs/FollowJointTrajectory" action
-	actionlib::ActionServer<control_msgs::FollowJointTrajectoryAction> *armJointTrajectoryAction;
-
-    /// Receives "brics_actuator/JointPositions" for the gripper
-    ros::Subscriber gripperPositionCommandSubscriber;
-
-
-    /// Publishes JointState messages with angles for the arm.
-    ros::Publisher armJointStatePublisher;
-
-    /// Service to switch the motor off by setting the PWM value to zero
-    ros::ServiceServer switchOffMotorsService;
-
-    /// Service to switch the motor ON by setting the velocity to zero
-    ros::ServiceServer switchONMotorsService;
-
-    /// Service to calibrate the arm
-    ros::ServiceServer calibrateService;
-
-    //Server* trajectoryActionServer;
-    //JointTrajectoryAction* jointTrajectoryAction;
+        /// Publishes tf frames as odometry
+        tf::TransformBroadcaster odometryBroadcaster;
+    };
 
     /**
-     * This variable memorizes the last successfully set value for the gripper,
-     * so it can be published in the joint state message. This is necessary at the moment, as
-     * it is not yet possible to measure the actual distance. Consider the gripper joint state
-     * as an open loop value.
-     */
-    double lastGripperCommand;
-
-};
-
-/**
  * @brief Aggregation class for instantiated parts of a youBot systems and all its name mapping between ROS and the youBot API.
  */
-class YouBotConfiguration
-{
-public:
-    YouBotConfiguration();
-    virtual ~YouBotConfiguration();
+    class YouBotConfiguration {
+    public:
+        YouBotConfiguration();
+        virtual ~YouBotConfiguration();
 
-    /// Path to the configuration files, required by OODL (e.g. youbot-base.cfg)
-    std::string configurationFilePath;
+        ///Flag to indicate if youBot has a base (set after successful initialization)
+        bool hasBase;
 
-    ///Flag to indicate if youBot has a base (set after successful initialization)
-    bool hasBase;
+        /// Path to the configuration files, required by OODL (e.g. youbot-base.cfg)
+        std::string configurationFilePath;
 
-    ///Flag to indicate if youBot has one or more arms (set after successful initialization)
-    bool hasArms;
+        /// A youbot system has one base
+        YouBotBaseConfiguration baseConfiguration;
 
-    /// A youbot system has one base
-    YouBotBaseConfiguration baseConfiguration;
+        /// Publishes diagnostic messages
+        ros::Publisher diagnosticArrayPublisher;
 
-    /// A youbot system has one or more arms
-    std::vector<YouBotArmConfiguration> youBotArmConfigurations;
-    std::map<std::string, int> armNameToArmIndexMapping;
-    
-    /// Publishes diagnostic messages
-    ros::Publisher diagnosticArrayPublisher;
-    
-    ros::Publisher dashboardMessagePublisher;
-};
-
-
-
+        ros::Publisher dashboardMessagePublisher;
+    };
 
 } // namespace youBot
 
